@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "680565328402",
+    "project_id": "fatma-48657",
+    "storage_bucket": "fatma-48657.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680565328402:android:d7b459839091d0018066cb",
+        "android_client_info": {
+          "package_name": "com.example.calisma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT6UbrZjHgQ4cZOtKg7VO3H5d5vaFAlA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680565328402:android:e6c4ef7a8ee7144c8066cb",
+        "android_client_info": {
+          "package_name": "com.example.deneme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT6UbrZjHgQ4cZOtKg7VO3H5d5vaFAlA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680565328402:android:2a2b73eabbfe1eba8066cb",
+        "android_client_info": {
+          "package_name": "com.example.istegram_clone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT6UbrZjHgQ4cZOtKg7VO3H5d5vaFAlA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

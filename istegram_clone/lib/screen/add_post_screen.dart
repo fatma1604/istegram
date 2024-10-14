@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:istegram_clone/screen/addpost_text.dart';
@@ -13,64 +14,70 @@ class AddPostScreen extends StatefulWidget {
 
 class _AddPostScreenState extends State<AddPostScreen> {
   final List<Widget> _mediaList = [];
-  final List<File> _path = [];
+  final List<File> path = [];
   File? _file;
   int currentPage = 0;
-
+  int? lastPage;
   @override
-  void initState() {
-    super.initState();
-    _fetchNewMedia();
-  }
-
-  Future<void> _fetchNewMedia() async {
+  _fetchNewMedia() async {
+    lastPage = currentPage;
     final PermissionState ps = await PhotoManager.requestPermissionExtend();
     if (ps.isAuth) {
-      List<AssetPathEntity> album = await PhotoManager.getAssetPathList(type: RequestType.image);
-      List<AssetEntity> media = await album[0].getAssetListPaged(page: currentPage, size: 60);
-
-      List<Widget> tempMediaList = [];
+      List<AssetPathEntity> album =
+          await PhotoManager.getAssetPathList(type: RequestType.image);
+      List<AssetEntity> media =
+          await album[0].getAssetListPaged(page: currentPage, size: 60);
 
       for (var asset in media) {
         if (asset.type == AssetType.image) {
           final file = await asset.file;
           if (file != null) {
-            _path.add(File(file.path));
-            tempMediaList.add(
-              FutureBuilder(
-                future: asset.thumbnailDataWithSize(ThumbnailSize(200, 200)),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
-                    return Container(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Image.memory(
-                              snapshot.data!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return Container(); // Boş dönerken bir şey gösterme
-                },
-              ),
-            );
+            path.add(File(file.path));
+            _file = path[0];
           }
         }
       }
+      List<Widget> temp = [];
+      for (var asset in media) {
+        temp.add(
+          FutureBuilder(
+            future: asset.thumbnailDataWithSize(ThumbnailSize(200, 200)),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done)
+                return Container(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
 
-      if (mounted) {
-        setState(() {
-          _mediaList.addAll(tempMediaList);
-        });
+              return Container();
+            },
+          ),
+        );
       }
+      setState(() {
+        _mediaList.addAll(temp);
+        currentPage++;
+      });
     }
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchNewMedia();
+  }
+
+  int indexx = 0;
+
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -88,11 +95,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
               padding: EdgeInsets.symmetric(horizontal: 10.w),
               child: GestureDetector(
                 onTap: () {
-                  if (_file != null) {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => AddPostTextScreen(_file!),
-                    ));
-                  }
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => AddPostTextScreen(_file!),
+                  ));
                 },
                 child: Text(
                   'Next',
@@ -111,14 +116,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 SizedBox(
                   height: 375.h,
                   child: GridView.builder(
-                    itemCount: _mediaList.isEmpty ? 1 : _mediaList.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    itemCount: _mediaList.isEmpty ? _mediaList.length : 1,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 1,
                       mainAxisSpacing: 1,
                       crossAxisSpacing: 1,
                     ),
                     itemBuilder: (context, index) {
-                      return _mediaList.isNotEmpty ? _mediaList[index] : Container();
+                      return _mediaList[indexx];
                     },
                   ),
                 ),
@@ -132,16 +138,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       Text(
                         'Recent',
                         style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            fontSize: 15.sp, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
                 ),
                 GridView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _mediaList.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
@@ -152,7 +155,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     return GestureDetector(
                       onTap: () {
                         setState(() {
-                          _file = _path[index];
+                          indexx = index;
+                          _file = path[index];
                         });
                       },
                       child: _mediaList[index],

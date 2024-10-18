@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:image/image.dart' as img; // Import the image package
 
 class PhotoPicker extends StatefulWidget {
   @override
@@ -13,15 +14,10 @@ class _PhotoPickerState extends State<PhotoPicker> {
   final ImagePicker _picker = ImagePicker();
   CameraController? _cameraController;
   Future<void>? _initializeControllerFuture;
-  int _selectedCameraIndex = 0; // Track the currently selected camera
+  int _selectedCameraIndex = 0;
+  bool _isFlashOn = false; // Flash state
 
-  // List of messages for each page
-  final List<String> _messages = [
-    'Welcome to the Photo Picker!',
-    'Swipe up for more options.',
-    'Take a picture or choose from gallery.',
-    'Enjoy capturing memories!'
-  ];
+  final List<String> _texts = ["Text 1", "Text 2", "Text 3", "Text 4"];
 
   @override
   void initState() {
@@ -48,20 +44,70 @@ class _PhotoPickerState extends State<PhotoPicker> {
     });
   }
 
-  Future<void> _takePicture() async {
-    if (_cameraController == null || _initializeControllerFuture == null) return;
+  Future<void> _takePicture(String selectedText) async {
+    if (_cameraController == null || _initializeControllerFuture == null)
+      return;
 
     await _initializeControllerFuture;
+
+    // Set flash mode based on current state
+    if (_isFlashOn) {
+      await _cameraController!
+          .setFlashMode(FlashMode.torch); // Turn on the flash
+    } else {
+      await _cameraController!
+          .setFlashMode(FlashMode.off); // Turn off the flash
+    }
+
     final XFile picture = await _cameraController!.takePicture();
-    setState(() {
-      _image = picture;
-    });
+
+    // Reset flash mode to off after taking the picture
+    await _cameraController!.setFlashMode(FlashMode.off);
+
+    // Apply a filter to the image
+    final filteredImagePath = await _applyFilter(File(picture.path));
+
+    // Navigate to TextPage with the selected text
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            TextPage(text: selectedText, imagePath: filteredImagePath),
+      ),
+    );
+  }
+
+  Future<String> _applyFilter(File imageFile) async {
+    // Load the image
+    final img.Image originalImage =
+        img.decodeImage(await imageFile.readAsBytes())!;
+
+    // Apply grayscale filter
+    final img.Image grayscaleImage = img.grayscale(originalImage);
+
+    // Save the filtered image
+    final String filteredImagePath = '${imageFile.path}_filtered.png';
+    final File filteredFile = File(filteredImagePath)
+      ..writeAsBytesSync(img.encodePng(grayscaleImage));
+
+    return filteredFile.path;
   }
 
   Future<void> _switchCamera() async {
     _selectedCameraIndex =
         (_selectedCameraIndex + 1) % (await availableCameras()).length;
     await _initializeCamera();
+  }
+
+  void _toggleFlash() {
+    setState(() {
+      _isFlashOn = !_isFlashOn;
+    });
+    // Update flash mode immediately when toggling
+    if (_cameraController != null) {
+      _cameraController!
+          .setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
+    }
   }
 
   @override
@@ -76,75 +122,131 @@ class _PhotoPickerState extends State<PhotoPicker> {
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
-          return Stack(
-            children: [
-              // Black background
-              Container(color: Colors.black),
-              if (snapshot.connectionState == ConnectionState.done)
-                CameraPreview(_cameraController!),
-              if (_image != null)
-                Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: FileImage(File(_image!.path)),
-                      fit: BoxFit.cover,
+          return GestureDetector(
+            onVerticalDragUpdate: (details) {
+              if (details.delta.dy < -5) {
+                _pickImage(ImageSource.gallery);
+              }
+            },
+            child: Stack(
+              children: [
+                Container(color: Colors.black),
+                if (snapshot.connectionState == ConnectionState.done)
+                  CameraPreview(_cameraController!),
+                if (_image != null)
+                  Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: FileImage(File(_image!.path)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                    ),
+                  ),
+                // Flash icon positioned at the top
+                Positioned(
+                  top: 50,
+                  left: 10,
+                  child: IconButton(
+                    icon: Icon(Icons.flash_on,
+                        size: 30,
+                        color: _isFlashOn ? Colors.yellow : Colors.white),
+                    onPressed: _toggleFlash, // Toggle flash
+                  ),
+                ),
+                Positioned(
+                  left: 10,
+                  bottom: 20,
+                  child: IconButton(
+                    icon: Icon(Icons.camera, size: 30, color: Colors.white),
+                    onPressed: () =>
+                        _takePicture(_texts[0]), // Default to first text
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  bottom: 20,
+                  child: IconButton(
+                    icon: Icon(Icons.photo_library,
+                        size: 30, color: Colors.white),
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                  ),
+                ),
+                Positioned(
+                  right: 20,
+                  bottom: 20,
+                  child: IconButton(
+                    icon: Icon(Icons.cached_rounded,
+                        size: 30, color: Colors.white),
+                    onPressed: _switchCamera,
+                  ),
+                ),
+                Positioned(
+                  left: 60,
+                  right: 60,
+                  bottom: 20,
+                  child: Container(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _texts.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            if (_image != null) {
+                              _takePicture(_texts[index]);
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 20),
+                            alignment: Alignment.center,
+                            child: Text(
+                              _texts[index],
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-              Positioned(
-                left: 10,
-                bottom: 80,
-                right: 20,
-                child: IconButton(
-                  icon: Icon(Icons.camera, size: 30, color: Colors.white),
-                  onPressed: _takePicture,
-                ),
-              ),
-              Positioned(
-                left: 20,
-                bottom: 20,
-                child: IconButton(
-                  icon: Icon(Icons.photo_library,
-                      size: 30, color: Colors.white),
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                ),
-              ),
-              Positioned(
-                right: 20,
-                bottom: 20,
-                child: IconButton(
-                  icon: Icon(Icons.cached_rounded,
-                      size: 30, color: Colors.white),
-                  onPressed: _switchCamera,
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 200, // Adjust height as needed
-                child: PageView.builder(
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      color: Colors.black,
-                      alignment: Alignment.center,
-                      child: Text(
-                        _messages[index],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         },
+      ),
+    );
+  }
+}
+
+class TextPage extends StatelessWidget {
+  final String text;
+  final String imagePath;
+
+  const TextPage({Key? key, required this.text, required this.imagePath})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Text Page")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.file(File(imagePath),
+                fit: BoxFit.cover, height: 300), // Display the captured image
+            SizedBox(height: 20),
+            Text(
+              text,
+              style: TextStyle(fontSize: 24),
+            ),
+          ],
+        ),
       ),
     );
   }

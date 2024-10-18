@@ -14,34 +14,9 @@ class Navigations_Screen extends StatefulWidget {
   State<Navigations_Screen> createState() => _Navigations_ScreenState();
 }
 
-int _currentIndex = 0;
-
 class _Navigations_ScreenState extends State<Navigations_Screen> {
-  late PageController pageController;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    pageController.dispose();
-  }
-
-  onPageChanged(int page) {
-    setState(() {
-      _currentIndex = page;
-    });
-  }
-
-  navigationTapped(int page) {
-    pageController.jumpToPage(page);
-  }
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +27,11 @@ class _Navigations_ScreenState extends State<Navigations_Screen> {
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.grey,
           currentIndex: _currentIndex,
-          onTap: navigationTapped,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
           items: [
             const BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -80,9 +59,8 @@ class _Navigations_ScreenState extends State<Navigations_Screen> {
           ],
         ),
       ),
-      body: PageView(
-        controller: pageController,
-        onPageChanged: onPageChanged,
+      body: IndexedStack(
+        index: _currentIndex,
         children: [
           const HomeScreen(),
           const ExploreScreen(),

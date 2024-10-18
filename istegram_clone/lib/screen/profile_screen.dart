@@ -1,9 +1,6 @@
-
 import 'package:flutter/material.dart';
 
-
 class ProfileScreen extends StatefulWidget {
-
   ProfileScreen({super.key});
 
   @override
@@ -13,6 +10,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body: Center(
+        child: Text("şvş"),
+      ),
+    );
   }
 }

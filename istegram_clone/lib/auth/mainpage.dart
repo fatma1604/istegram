@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:istegram_clone/auth/auth_screen.dart';
+import 'package:istegram_clone/screen/den.dart';
 import 'package:istegram_clone/widgets/navigation.dart';
 
 
@@ -14,7 +15,7 @@ class MainPage extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return const Navigations_Screen();
+            return Den();
           } else {
             return const AuthScreen();
           }

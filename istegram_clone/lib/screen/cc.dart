@@ -49,7 +49,8 @@ class _PhotoPickerState extends State<PhotoPicker> {
   }
 
   Future<void> _takePicture() async {
-    if (_cameraController == null || _initializeControllerFuture == null) return;
+    if (_cameraController == null || _initializeControllerFuture == null)
+      return;
 
     await _initializeControllerFuture;
     final XFile picture = await _cameraController!.takePicture();
@@ -104,8 +105,8 @@ class _PhotoPickerState extends State<PhotoPicker> {
                 left: 20,
                 bottom: 20,
                 child: IconButton(
-                  icon: Icon(Icons.photo_library,
-                      size: 30, color: Colors.white),
+                  icon:
+                      Icon(Icons.photo_library, size: 30, color: Colors.white),
                   onPressed: () => _pickImage(ImageSource.gallery),
                 ),
               ),
@@ -113,8 +114,8 @@ class _PhotoPickerState extends State<PhotoPicker> {
                 right: 20,
                 bottom: 20,
                 child: IconButton(
-                  icon: Icon(Icons.cached_rounded,
-                      size: 30, color: Colors.white),
+                  icon:
+                      Icon(Icons.cached_rounded, size: 30, color: Colors.white),
                   onPressed: _switchCamera,
                 ),
               ),
